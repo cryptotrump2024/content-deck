@@ -41,6 +41,12 @@
       </div>
     </div>
     <div class="header-right">
+      <!-- News Feed toggle -->
+      <button class="news-feed-btn" id="newsFeedBtn" onclick="toggleNewsFeed()" title="Auto-drafted news posts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+        <span>News Feed</span>
+        <span class="news-count-badge" id="newsFeedCount" style="display:none">0</span>
+      </button>
       <nav class="header-nav">
         <button class="nav-link active" data-page="dashboard" onclick="navigateTo('dashboard')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
@@ -94,6 +100,25 @@
 
   <!-- Settings Page -->
   <div id="settingsPage" style="display:none;flex:1;overflow-y:auto;padding:24px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))"></div>
+
+  <!-- News Feed Panel -->
+  <div class="news-feed-overlay" id="newsFeedOverlay" onclick="toggleNewsFeed()"></div>
+  <aside class="news-feed-panel" id="newsFeedPanel">
+    <div class="news-feed-header">
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+        News Feed
+      </h3>
+      <button class="news-feed-close" onclick="toggleNewsFeed()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="news-feed-tabs">
+      <button class="news-feed-tab active" data-tab="drafts" onclick="switchFeedTab('drafts')">Auto-Drafts</button>
+      <button class="news-feed-tab" data-tab="topics" onclick="switchFeedTab('topics')">Topics Covered</button>
+    </div>
+    <div class="news-feed-list" id="newsFeedList"></div>
+  </aside>
 
   <!-- Mobile Bottom Navigation -->
   <nav class="bottom-nav" id="bottomNav">

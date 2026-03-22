@@ -81,6 +81,7 @@ function renderPage(){
   if(currentPage==='dashboard'){renderSidebar();renderDetail()}
   else if(currentPage==='archive')renderArchive();
   else if(currentPage==='settings')renderSettings();
+  updateNewsFeedBadge();
 }
 function updateHeader(){
   const s=document.getElementById('apiStatus');if(s)s.style.display=settings.twitter_api.configured?'flex':'none';
@@ -376,4 +377,135 @@ function renderThreadPrev(tw){
   const tts=getThread(tw.threadId),status=tw.status;
   let pH='';tts.forEach((t,i)=>{let cls='';if(tts.length>1){if(i===0)cls='thread-first';else if(i===tts.length-1)cls='thread-last';else cls='thread-mid'}pH+=tpHTML(t,cls,`${i+1}/${tts.length}`);if(i<tts.length-1)pH+='<div class="thread-connector-line"></div>'});
   return `<div class="detail-view animate-in"><div class="detail-toolbar"><div class="detail-toolbar-left"><span class="status-badge ${status}"><span class="status-dot"></span>${status[0].toUpperCase()+status.slice(1)}</span><span class="thread-label">${I.thread} Thread &middot; ${tts.length} tweets</span></div><div class="detail-toolbar-right">${stBtns(tw)}<button class="btn btn-secondary" onclick="startThreadEdit('${tw.threadId}')">${I.edit} Edit Thread</button><button class="btn btn-danger" onclick="openDeleteModal('${tw.id}')">${I.trash}</button></div></div><div class="detail-body"><div class="tweet-preview-container">${pH}</div><div class="detail-meta"><div class="meta-item"><span class="meta-label">Total Chars</span><span class="meta-value" style="font-family:'JetBrains Mono',monospace">${tts.reduce((s,t)=>s+t.text.length,0)}</span></div><div class="meta-item"><span class="meta-label">Tweets</span><span class="meta-value" style="font-family:'JetBrains Mono',monospace">${tts.length}</span></div></div><div class="action-bar"><button class="btn btn-copy" onclick="copyThread('${tw.threadId}')" id="copyBtn">${I.copy} Copy All</button></div></div></div>`;
+}
+
+// ============================================================
+// NEWS FEED PANEL — v3.3
+// ============================================================
+
+let newsFeedOpen = false;
+let newsFeedTab = 'drafts'; // 'drafts' | 'topics'
+
+function toggleNewsFeed() {
+  newsFeedOpen = !newsFeedOpen;
+  document.getElementById('newsFeedPanel').classList.toggle('open', newsFeedOpen);
+  document.getElementById('newsFeedOverlay').classList.toggle('open', newsFeedOpen);
+  if (newsFeedOpen) renderNewsFeed();
+}
+
+function switchFeedTab(tab) {
+  newsFeedTab = tab;
+  document.querySelectorAll('.news-feed-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  renderNewsFeed();
+}
+
+function getAutoDrafts() {
+  return activeTweets.filter(t => (t.tags || []).includes('auto-generated'));
+}
+
+function getCoveredTopics() {
+  const all = [...activeTweets, ...sentTweets];
+  const map = {};
+  all.forEach(t => {
+    (t.topics || []).forEach(topic => {
+      if (!map[topic] || new Date(t.createdAt) > new Date(map[topic].date)) {
+        map[topic] = {
+          topic,
+          date: t.createdAt,
+          status: t.status === 'sent' ? 'sent' : 'active',
+          platform: t.platform || 'twitter'
+        };
+      }
+    });
+  });
+  return Object.values(map).sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+function checkTopicOverlap(topics, excludeId) {
+  const all = [...activeTweets, ...sentTweets].filter(t => t.id !== excludeId);
+  const covered = all.flatMap(t => t.topics || []);
+  return (topics || []).filter(t => covered.includes(t));
+}
+
+function renderNewsFeed() {
+  const list = document.getElementById('newsFeedList');
+  if (!list) return;
+
+  if (newsFeedTab === 'drafts') {
+    const drafts = getAutoDrafts();
+    if (drafts.length === 0) {
+      list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-tertiary);font-size:13px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin:0 auto 12px;display:block;opacity:0.4"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+        No auto-generated drafts yet.<br>The hourly news monitor will add drafts here.
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = drafts.map(tw => {
+      const platform = tw.platform || 'twitter';
+      const overlap = checkTopicOverlap(tw.topics || [], tw.id);
+      const dupeHtml = overlap.length
+        ? `<span class="news-item-dupe-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Duplicate: ${overlap.join(', ')}</span>`
+        : '';
+      const readyBtnHtml = tw.status !== 'ready'
+        ? `<button class="news-item-btn news-item-btn-ready" onclick="event.stopPropagation();changeStatus('${tw.id}','ready')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve
+           </button>`
+        : '';
+      const domain = tw.sourceUrl ? (() => { try { return new URL(tw.sourceUrl).hostname.replace('www.',''); } catch(e) { return tw.sourceUrl; } })() : '';
+
+      return `<div class="news-item${overlap.length ? ' is-duplicate' : ''}">
+        <div class="news-item-meta">
+          <span class="news-item-platform ${platform}">${platform === 'linkedin' ? 'LinkedIn' : 'Twitter'}</span>
+          <span class="news-item-status ${tw.status}">${tw.status}</span>
+          ${dupeHtml}
+        </div>
+        <div class="news-item-text">${tw.text}</div>
+        <div class="news-item-footer">
+          <span class="news-item-source">${domain ? `<a href="${tw.sourceUrl}" target="_blank" rel="noopener">↗ ${domain}</a>` : ''}</span>
+          <div class="news-item-actions">
+            ${readyBtnHtml}
+            <button class="news-item-btn news-item-btn-open" onclick="toggleNewsFeed();selectTweet('${tw.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>Edit
+            </button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } else {
+    // Topics covered tab
+    const topics = getCoveredTopics();
+    if (topics.length === 0) {
+      list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-tertiary);font-size:13px">No topics tracked yet.</div>`;
+      return;
+    }
+    list.innerHTML = `<div class="news-topics-list">` +
+      topics.map(t => {
+        const d = new Date(t.date);
+        const label = d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+        return `<div class="news-topic-item">
+          <div class="news-topic-dot ${t.status === 'sent' ? 'sent' : ''}"></div>
+          <div class="news-topic-name">${t.topic}</div>
+          <div class="news-topic-date">${label}</div>
+        </div>`;
+      }).join('') +
+    `</div>`;
+  }
+}
+
+function updateNewsFeedBadge() {
+  const drafts = getAutoDrafts();
+  const btn = document.getElementById('newsFeedBtn');
+  const badge = document.getElementById('newsFeedCount');
+  if (!btn || !badge) return;
+  if (drafts.length > 0) {
+    badge.textContent = drafts.length;
+    badge.style.display = 'inline-flex';
+    btn.classList.add('has-news');
+  } else {
+    badge.style.display = 'none';
+    btn.classList.remove('has-news');
+  }
+  if (newsFeedOpen) renderNewsFeed();
 }

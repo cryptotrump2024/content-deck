@@ -410,6 +410,7 @@ async function copyLinkedinText(id) {
 // ============ SHARED ACTIONS (Status, Archive, Delete) ============
 
 function changeStatus(id,ns){
+  // Will call updateNewsFeedBadge via renderPage after save
   const tw=activeTweets.find(t=>t.id===id);if(!tw)return;
   if(tw.threadId){getThread(tw.threadId).forEach(t=>{t.status=ns;t.updatedAt=new Date().toISOString();if(ns==='sent')t.sentAt=new Date().toISOString()})}
   else{tw.status=ns;tw.updatedAt=new Date().toISOString();if(ns==='sent')tw.sentAt=new Date().toISOString()}
