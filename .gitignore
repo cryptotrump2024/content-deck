@@ -1,0 +1,6 @@
+data/
+*.ps1
+*.md
+last-check.json
+notification-state.json
+scripts/
