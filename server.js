@@ -66,15 +66,12 @@ async function supabasePush(rows) {
   return resp;
 }
 
-// Twitter API credentials (Using Bearer Token for now)
+// Twitter API credentials — loaded from environment variables ONLY
 const TWITTER_API = {
-  // For OAuth 2.0 Client Credentials Flow (currently having issues)
-  clientId: 'ZWR3cTVGTmhjTHYtbWw2VVJBbUI6MTpjaQ',
-  clientSecret: 'qfV8zyz476tnNyw3X8PKbWGxd1rXIhN0aVCUKitwJxt9jyuwCK',
+  clientId: process.env.TWITTER_OAUTH2_CLIENT_ID || '',
+  clientSecret: process.env.TWITTER_OAUTH2_CLIENT_SECRET || '',
   authEndpoint: 'https://api.twitter.com/2/oauth2/token',
-  
-  // For App-Only Authentication (Bearer Token) - USING THIS FOR NOW
-  bearerToken: process.env.TWITTER_BEARER_TOKEN || 'AAAAAAAAAAAAAAAAAAAAAMd28QEAAAAA9CdrEJC%2F0QRWpMGJYTA%2B%2Bz%2Bp1kg%3Dc84kY1ySllDtgZaoWmXJirZEiSXZwvizrrJtpM2OH1GPSeFbj9',
+  bearerToken: process.env.TWITTER_BEARER_TOKEN || '',
   apiEndpoint: 'https://api.twitter.com/2',
   accessToken: null,
   tokenExpiresAt: null

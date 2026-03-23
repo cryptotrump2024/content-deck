@@ -1,5 +1,5 @@
 // ContentDeck Bitcoin.diy v3.0 — Twitter + LinkedIn Multi-Platform
-let activeTweets=[],sentTweets=[],settings={twitter_api:{configured:true,bearer_token:'AAAAAAAAAAAAAAAAAAAAAMd28QEAAAAARKUW3M+iiQCq4sxZPxZCfLGIp+c=QWjINScCeaAFlkM1oJSN3WRTnAFkPzZ6FEqtSsmhaLSMTf8K1L',consumer_key:'w4F4snkc7eJQeMV9Xv9piiQ1E',consumer_secret:'RRigMTjASRkRXcCvx1LOvUVPsU0dfqA9k6KFyOvdQLxLH5pGka',oauth2_client_id:'ZWR3cTVGTmhjTHYtbWw2VVJBbUI6MTpjaQ',oauth2_client_secret:'qfV8zyz476tnNyw3X8PKbWGxd1rXIhN0aVCUKitwJxt9jyuwCK',last_tested:null,last_test_result:null}};
+let activeTweets=[],sentTweets=[],settings={twitter_api:{configured:false,bearer_token:'',consumer_key:'',consumer_secret:'',oauth2_client_id:'',oauth2_client_secret:'',last_tested:null,last_test_result:null}};
 let selectedId=null,editMode=false,currentFilter='all',searchQuery='',deleteTargetId=null,currentPage='dashboard';
 let currentPlatform='twitter'; // 'twitter' or 'linkedin'
 let newTweetIds=new Set(); // tracks IDs seen as "new" since last fetch
